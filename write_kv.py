@@ -1,0 +1,1058 @@
+"""Script to rewrite smartpos.kv with an improved admin-friendly UI"""
+import os
+
+KV = '''#:kivy 2.2.0
+#:import dp kivy.metrics.dp
+
+<KPICard>:
+    size_hint: None, None
+    size: dp(200), dp(100)
+    radius: [12]
+    padding: dp(14)
+    elevation: 3
+    md_bg_color: app.theme_cls.bg_darkest if app.theme_cls.theme_style == "Dark" else [1, 1, 1, 1]
+    MDBoxLayout:
+        orientation: "vertical"
+        spacing: dp(4)
+        MDBoxLayout:
+            size_hint_y: None
+            height: dp(32)
+            MDIcon:
+                icon: root.icon
+                theme_icon_color: "Custom"
+                icon_color: app.theme_cls.primary_color
+                font_size: dp(28)
+            Widget:
+        MDLabel:
+            text: root.value
+            font_style: "H5"
+            bold: True
+            size_hint_y: None
+            height: dp(32)
+            theme_text_color: "Primary"
+        MDLabel:
+            text: root.title
+            font_style: "Caption"
+            theme_text_color: "Secondary"
+            size_hint_y: None
+            height: dp(18)
+
+<ProductCard>:
+    size_hint_y: None
+    height: dp(115)
+    radius: [12]
+    padding: dp(12)
+    elevation: 2
+    md_bg_color: app.theme_cls.bg_darkest if app.theme_cls.theme_style == "Dark" else [1, 1, 1, 1]
+    MDBoxLayout:
+        orientation: "vertical"
+        spacing: dp(4)
+        MDLabel:
+            text: root.product_name
+            font_style: "Subtitle1"
+            bold: True
+            size_hint_y: None
+            height: dp(26)
+            shorten: True
+            shorten_from: "right"
+            theme_text_color: "Primary"
+        MDLabel:
+            text: root.sku
+            font_style: "Caption"
+            theme_text_color: "Hint"
+            size_hint_y: None
+            height: dp(16)
+        MDLabel:
+            text: root.category
+            font_style: "Caption"
+            theme_text_color: "Secondary"
+            size_hint_y: None
+            height: dp(16)
+        MDBoxLayout:
+            size_hint_y: None
+            height: dp(28)
+            MDLabel:
+                text: root.price
+                font_style: "Subtitle2"
+                bold: True
+                theme_text_color: "Custom"
+                text_color: app.theme_cls.primary_color
+            MDLabel:
+                text: root.stock
+                font_style: "Caption"
+                bold: True
+                theme_text_color: "Custom"
+                text_color: root.stock_color
+                halign: "right"
+
+<SplashScreen>:
+    name: "splash"
+    MDBoxLayout:
+        orientation: "vertical"
+        md_bg_color: app.theme_cls.primary_color
+        padding: dp(40)
+        spacing: dp(20)
+        Widget:
+            size_hint_y: 0.3
+        MDLabel:
+            text: "SmartPOS Pro"
+            halign: "center"
+            font_style: "H3"
+            bold: True
+            theme_text_color: "Custom"
+            text_color: [1, 1, 1, 1]
+        MDLabel:
+            text: "Enterprise Inventory & Billing System"
+            halign: "center"
+            font_style: "Subtitle1"
+            theme_text_color: "Custom"
+            text_color: [0.9, 0.9, 0.9, 1]
+        Widget:
+            size_hint_y: 0.2
+        MDProgressBar:
+            id: progress
+            size_hint_x: 0.5
+            pos_hint: {"center_x": 0.5}
+            color: [1, 1, 1, 1]
+            max: 100
+        MDLabel:
+            text: "Initializing Engine..."
+            halign: "center"
+            font_style: "Caption"
+            theme_text_color: "Custom"
+            text_color: [0.9, 0.9, 0.9, 1]
+        Widget:
+            size_hint_y: 0.2
+
+<LoginScreen>:
+    name: "login"
+    MDBoxLayout:
+        orientation: "vertical"
+        md_bg_color: app.theme_cls.bg_normal
+        padding: dp(32)
+        MDBoxLayout:
+            orientation: "vertical"
+            pos_hint: {"center_x": 0.5, "center_y": 0.5}
+            size_hint: 0.85, None
+            height: dp(520)
+            MDLabel:
+                text: "SmartPOS Pro"
+                halign: "center"
+                font_style: "H4"
+                bold: True
+                theme_text_color: "Primary"
+                size_hint_y: None
+                height: dp(60)
+            MDLabel:
+                text: "Secure Administrator Access"
+                halign: "center"
+                theme_text_color: "Secondary"
+                size_hint_y: None
+                height: dp(30)
+            Widget:
+                size_hint_y: None
+                height: dp(24)
+            MDCard:
+                id: login_card
+                orientation: "vertical"
+                padding: dp(32)
+                spacing: dp(18)
+                radius: [16]
+                elevation: 4
+                md_bg_color: app.theme_cls.bg_darkest if app.theme_cls.theme_style == "Dark" else [1, 1, 1, 1]
+                size_hint_y: None
+                height: dp(380)
+                MDTextField:
+                    id: username
+                    hint_text: "Username"
+                    icon_right: "account-outline"
+                    mode: "fill"
+                    radius: [8]
+                MDBoxLayout:
+                    size_hint_y: None
+                    height: dp(60)
+                    MDTextField:
+                        id: password
+                        hint_text: "Password"
+                        password: True
+                        mode: "fill"
+                        radius: [8]
+                    MDIconButton:
+                        id: eye_btn
+                        icon: "eye-off"
+                        pos_hint: {"center_y": 0.5}
+                        on_release: root.toggle_password()
+                MDBoxLayout:
+                    orientation: "horizontal"
+                    size_hint_y: None
+                    height: dp(40)
+                    MDCheckbox:
+                        id: remember
+                        size_hint: None, None
+                        size: dp(40), dp(40)
+                    MDLabel:
+                        text: "Keep me signed in"
+                        font_style: "Body2"
+                MDLabel:
+                    id: error_label
+                    text: ""
+                    theme_text_color: "Error"
+                    font_style: "Caption"
+                    size_hint_y: None
+                    height: dp(20)
+                MDFillRoundFlatButton:
+                    text: "SECURE LOGIN"
+                    font_size: "16sp"
+                    size_hint_x: 1
+                    height: dp(48)
+                    on_release: root.do_login()
+                MDLabel:
+                    text: "Default: admin / admin123"
+                    halign: "center"
+                    font_style: "Caption"
+                    theme_text_color: "Hint"
+                    size_hint_y: None
+                    height: dp(20)
+
+<DashboardScreen>:
+    name: "dashboard"
+    MDBoxLayout:
+        orientation: "vertical"
+        md_bg_color: app.theme_cls.bg_normal
+        MDTopAppBar:
+            title: "Admin Dashboard"
+            elevation: 3
+            left_action_items: [["menu", lambda x: app.open_drawer()]]
+            right_action_items: [["refresh", lambda x: root.refresh()]]
+        MDScrollView:
+            MDBoxLayout:
+                orientation: "vertical"
+                padding: dp(20)
+                spacing: dp(16)
+                size_hint_y: None
+                height: self.minimum_height
+                MDLabel:
+                    text: "Today\'s Overview"
+                    font_style: "H6"
+                    bold: True
+                    size_hint_y: None
+                    height: dp(34)
+                MDLabel:
+                    id: notif_badge
+                    text: ""
+                    theme_text_color: "Error"
+                    size_hint_y: None
+                    height: dp(20)
+                MDGridLayout:
+                    id: kpi_grid
+                    cols: 3
+                    spacing: dp(16)
+                    size_hint_y: None
+                    height: self.minimum_height
+                MDLabel:
+                    text: "Quick Actions"
+                    font_style: "H6"
+                    bold: True
+                    size_hint_y: None
+                    height: dp(32)
+                MDBoxLayout:
+                    size_hint_y: None
+                    height: dp(56)
+                    spacing: dp(12)
+                    MDFillRoundFlatButton:
+                        text: "Add New Product"
+                        icon: "plus"
+                        on_release: app.navigate("products")
+                    MDFillRoundFlatButton:
+                        text: "Open POS Register"
+                        icon: "cash-register"
+                        on_release: app.navigate("pos")
+                    MDFillRoundFlatButton:
+                        text: "View Analytics"
+                        icon: "chart-bar"
+                        on_release: app.navigate("analytics")
+                MDLabel:
+                    text: "Revenue Trend (30 days)"
+                    font_style: "H6"
+                    bold: True
+                    size_hint_y: None
+                    height: dp(32)
+                MDBoxLayout:
+                    id: chart_container
+                    size_hint_y: None
+                    height: dp(220)
+                MDLabel:
+                    text: "Top Moving Products"
+                    font_style: "H6"
+                    bold: True
+                    size_hint_y: None
+                    height: dp(32)
+                MDBoxLayout:
+                    id: top_products_list
+                    orientation: "vertical"
+                    size_hint_y: None
+                    height: self.minimum_height
+
+<ProductsScreen>:
+    name: "products"
+    MDBoxLayout:
+        orientation: "vertical"
+        md_bg_color: app.theme_cls.bg_normal
+        MDTopAppBar:
+            title: "Product Inventory"
+            elevation: 3
+            left_action_items: [["menu", lambda x: app.open_drawer()]]
+            right_action_items: [["plus", lambda x: root.open_add_dialog()], ["file-import", lambda x: root.import_csv()]]
+        MDCard:
+            orientation: "horizontal"
+            size_hint_y: None
+            height: dp(64)
+            padding: dp(12)
+            spacing: dp(12)
+            elevation: 1
+            md_bg_color: app.theme_cls.bg_darkest if app.theme_cls.theme_style == "Dark" else [1, 1, 1, 1]
+            MDTextField:
+                hint_text: "Search by Name, SKU, or Barcode..."
+                icon_right: "magnify"
+                mode: "fill"
+                radius: [8]
+                size_hint_y: None
+                height: dp(48)
+                on_text: root.on_search(self.text)
+            MDLabel:
+                id: product_count_label
+                size_hint_x: None
+                width: dp(120)
+                halign: "center"
+                font_style: "Subtitle2"
+        MDBoxLayout:
+            orientation: "horizontal"
+            size_hint_y: None
+            height: dp(48)
+            padding: [dp(16), 0]
+            spacing: dp(12)
+            MDFlatButton:
+                text: "All Products"
+                theme_text_color: "Primary"
+                on_release: root._load_products()
+            MDFlatButton:
+                text: "Low Stock Alerts"
+                theme_text_color: "Error"
+                on_release: root.filter_low_stock()
+            MDFlatButton:
+                text: "Export CSV"
+                theme_text_color: "Custom"
+                text_color: app.theme_cls.primary_color
+                on_release: root.export_csv()
+        MDScrollView:
+            MDGridLayout:
+                id: products_grid
+                cols: 3
+                spacing: dp(12)
+                padding: dp(16)
+                size_hint_y: None
+                height: self.minimum_height
+
+<POSScreen>:
+    name: "pos"
+    MDBoxLayout:
+        orientation: "horizontal"
+        md_bg_color: app.theme_cls.bg_normal
+        # Left Side - Products
+        MDBoxLayout:
+            orientation: "vertical"
+            size_hint_x: 0.60
+            MDTopAppBar:
+                title: "POS Terminal"
+                elevation: 3
+                left_action_items: [["menu", lambda x: app.open_drawer()]]
+                right_action_items: [["barcode-scan", lambda x: root.scan_barcode()], ["delete-sweep", lambda x: root.clear_cart()]]
+            MDBoxLayout:
+                size_hint_y: None
+                height: dp(72)
+                padding: dp(12)
+                spacing: dp(12)
+                MDTextField:
+                    id: barcode_field
+                    hint_text: "Scan Barcode or Type Product Code"
+                    icon_right: "barcode"
+                    mode: "fill"
+                    radius: [8]
+                    size_hint_y: None
+                    height: dp(48)
+                    on_text_validate: root.on_barcode_entered(self.text)
+            MDBoxLayout:
+                size_hint_y: None
+                height: dp(56)
+                padding: [dp(12), dp(4)]
+                MDTextField:
+                    hint_text: "Search catalog to add manually..."
+                    mode: "fill"
+                    radius: [8]
+                    size_hint_y: None
+                    height: dp(48)
+                    on_text: root.on_search(self.text)
+            MDScrollView:
+                MDGridLayout:
+                    id: product_grid
+                    cols: 4
+                    spacing: dp(8)
+                    padding: dp(12)
+                    size_hint_y: None
+                    height: self.minimum_height
+        
+        # Right Side - Cart & Checkout
+        MDBoxLayout:
+            orientation: "vertical"
+            size_hint_x: 0.40
+            md_bg_color: app.theme_cls.bg_darkest if app.theme_cls.theme_style == "Dark" else [0.95, 0.95, 0.96, 1]
+            canvas.before:
+                Color:
+                    rgba: 0.8, 0.8, 0.8, 1
+                Line:
+                    width: 1
+                    points: self.x, self.y, self.x, self.top
+            MDBoxLayout:
+                orientation: "horizontal"
+                size_hint_y: None
+                height: dp(56)
+                padding: [dp(16), dp(8)]
+                md_bg_color: app.theme_cls.primary_color
+                MDLabel:
+                    id: customer_label
+                    text: "Walk-in Customer"
+                    font_style: "Subtitle1"
+                    bold: True
+                    theme_text_color: "Custom"
+                    text_color: [1, 1, 1, 1]
+                MDIconButton:
+                    icon: "account-search"
+                    theme_icon_color: "Custom"
+                    icon_color: [1, 1, 1, 1]
+                    on_release: root.set_customer()
+            MDBoxLayout:
+                size_hint_y: None
+                height: dp(32)
+                padding: [dp(16), dp(4)]
+                md_bg_color: app.theme_cls.bg_dark if app.theme_cls.theme_style == "Dark" else [0.9, 0.9, 0.92, 1]
+                MDLabel:
+                    text: "Item"
+                    size_hint_x: 0.45
+                    font_style: "Caption"
+                    bold: True
+                MDLabel:
+                    text: "Qty"
+                    size_hint_x: 0.15
+                    font_style: "Caption"
+                    bold: True
+                MDLabel:
+                    text: "Price"
+                    size_hint_x: 0.2
+                    font_style: "Caption"
+                    bold: True
+                MDLabel:
+                    text: "Total"
+                    size_hint_x: 0.2
+                    font_style: "Caption"
+                    bold: True
+            MDScrollView:
+                size_hint_y: 1
+                MDBoxLayout:
+                    id: cart_list
+                    orientation: "vertical"
+                    size_hint_y: None
+                    height: self.minimum_height
+                    padding: dp(8)
+                    spacing: dp(4)
+            MDCard:
+                orientation: "vertical"
+                size_hint_y: None
+                height: dp(260)
+                padding: dp(16)
+                spacing: dp(8)
+                elevation: 4
+                radius: [16, 16, 0, 0]
+                md_bg_color: app.theme_cls.bg_darkest if app.theme_cls.theme_style == "Dark" else [1, 1, 1, 1]
+                MDBoxLayout:
+                    size_hint_y: None
+                    height: dp(48)
+                    spacing: dp(8)
+                    MDTextField:
+                        id: coupon_field
+                        hint_text: "Discount/Coupon Code"
+                        mode: "fill"
+                        radius: [8]
+                        size_hint_y: None
+                        height: dp(44)
+                    MDRectangleFlatButton:
+                        text: "APPLY"
+                        on_release: root.apply_coupon()
+                MDBoxLayout:
+                    size_hint_y: None
+                    height: dp(24)
+                    MDLabel:
+                        text: "Subtotal:"
+                        theme_text_color: "Secondary"
+                    MDLabel:
+                        id: subtotal_label
+                        text: "0.00"
+                        halign: "right"
+                        font_style: "Subtitle2"
+                MDBoxLayout:
+                    size_hint_y: None
+                    height: dp(24)
+                    MDLabel:
+                        text: "GST/Tax:"
+                        theme_text_color: "Secondary"
+                    MDLabel:
+                        id: tax_label
+                        text: "0.00"
+                        halign: "right"
+                        font_style: "Subtitle2"
+                MDBoxLayout:
+                    size_hint_y: None
+                    height: dp(24)
+                    MDLabel:
+                        text: "Discount:"
+                        theme_text_color: "Error"
+                    MDLabel:
+                        id: discount_label
+                        text: "0.00"
+                        halign: "right"
+                        theme_text_color: "Error"
+                        font_style: "Subtitle2"
+                MDBoxLayout:
+                    size_hint_y: None
+                    height: dp(40)
+                    MDLabel:
+                        text: "NET PAYABLE:"
+                        font_style: "H6"
+                        bold: True
+                    MDLabel:
+                        id: total_label
+                        text: "0.00"
+                        font_style: "H5"
+                        bold: True
+                        halign: "right"
+                        theme_text_color: "Custom"
+                        text_color: app.theme_cls.primary_color
+                MDBoxLayout:
+                    size_hint_y: None
+                    height: dp(20)
+                    MDLabel:
+                        id: item_count
+                        text: "0 items in cart"
+                        font_style: "Caption"
+                        theme_text_color: "Secondary"
+                        halign: "center"
+                MDFillRoundFlatButton:
+                    text: "PROCEED TO CHECKOUT"
+                    font_size: "18sp"
+                    size_hint_x: 1
+                    height: dp(54)
+                    on_release: root.open_payment_dialog()
+
+<CustomersScreen>:
+    name: "customers"
+    MDBoxLayout:
+        orientation: "vertical"
+        MDTopAppBar:
+            title: "Customer Directory"
+            left_action_items: [["menu", lambda x: app.open_drawer()]]
+            right_action_items: [["account-plus", lambda x: root.open_add()]]
+        MDBoxLayout:
+            size_hint_y: None
+            height: dp(64)
+            padding: dp(12)
+            MDTextField:
+                hint_text: "Search customers by name, phone..."
+                icon_right: "magnify"
+                mode: "fill"
+                radius: [8]
+                size_hint_y: None
+                height: dp(48)
+                on_text: root.on_search(self.text)
+            MDLabel:
+                id: count_label
+                size_hint_x: None
+                width: dp(120)
+                halign: "center"
+                font_style: "Subtitle2"
+        MDScrollView:
+            MDBoxLayout:
+                id: list_container
+                orientation: "vertical"
+                size_hint_y: None
+                height: self.minimum_height
+                padding: dp(12)
+                spacing: dp(4)
+
+<SuppliersScreen>:
+    name: "suppliers"
+    MDBoxLayout:
+        orientation: "vertical"
+        MDTopAppBar:
+            title: "Supplier Management"
+            left_action_items: [["menu", lambda x: app.open_drawer()]]
+            right_action_items: [["truck-plus", lambda x: root.open_add()]]
+        MDBoxLayout:
+            size_hint_y: None
+            height: dp(64)
+            padding: dp(12)
+            MDTextField:
+                hint_text: "Search suppliers..."
+                icon_right: "magnify"
+                mode: "fill"
+                radius: [8]
+                size_hint_y: None
+                height: dp(48)
+                on_text: root.on_search(self.text)
+            MDLabel:
+                id: count_label
+                size_hint_x: None
+                width: dp(120)
+                halign: "center"
+                font_style: "Subtitle2"
+        MDScrollView:
+            MDBoxLayout:
+                id: list_container
+                orientation: "vertical"
+                size_hint_y: None
+                height: self.minimum_height
+                padding: dp(12)
+                spacing: dp(4)
+
+<InventoryScreen>:
+    name: "inventory"
+    MDBoxLayout:
+        orientation: "vertical"
+        md_bg_color: app.theme_cls.bg_normal
+        MDTopAppBar:
+            title: "Inventory Control"
+            elevation: 3
+            left_action_items: [["menu", lambda x: app.open_drawer()]]
+            right_action_items: [["package-down", lambda x: root.open_stock_in()], ["package-up", lambda x: root.open_stock_out()]]
+        MDScrollView:
+            MDBoxLayout:
+                orientation: "vertical"
+                padding: dp(16)
+                spacing: dp(16)
+                size_hint_y: None
+                height: self.minimum_height
+                MDGridLayout:
+                    cols: 2
+                    spacing: dp(16)
+                    size_hint_y: None
+                    height: self.minimum_height
+                    MDCard:
+                        padding: dp(16)
+                        radius: [12]
+                        elevation: 2
+                        size_hint_y: None
+                        height: dp(90)
+                        md_bg_color: app.theme_cls.bg_darkest if app.theme_cls.theme_style == "Dark" else [1, 1, 1, 1]
+                        MDBoxLayout:
+                            orientation: "vertical"
+                            MDLabel:
+                                text: "Total Inventory Value"
+                                theme_text_color: "Secondary"
+                                font_style: "Subtitle2"
+                            MDLabel:
+                                id: inv_value
+                                text: "0.00"
+                                font_style: "H5"
+                                bold: True
+                                theme_text_color: "Primary"
+                    MDCard:
+                        padding: dp(16)
+                        radius: [12]
+                        elevation: 2
+                        size_hint_y: None
+                        height: dp(90)
+                        md_bg_color: app.theme_cls.bg_darkest if app.theme_cls.theme_style == "Dark" else [1, 1, 1, 1]
+                        MDBoxLayout:
+                            orientation: "vertical"
+                            MDLabel:
+                                text: "Total Products"
+                                theme_text_color: "Secondary"
+                                font_style: "Subtitle2"
+                            MDLabel:
+                                id: total_products
+                                text: "0"
+                                font_style: "H5"
+                                bold: True
+                                theme_text_color: "Primary"
+                    MDCard:
+                        padding: dp(16)
+                        radius: [12]
+                        elevation: 2
+                        size_hint_y: None
+                        height: dp(90)
+                        md_bg_color: app.theme_cls.bg_darkest if app.theme_cls.theme_style == "Dark" else [1, 1, 1, 1]
+                        MDBoxLayout:
+                            orientation: "vertical"
+                            MDLabel:
+                                text: "Low Stock Items"
+                                theme_text_color: "Secondary"
+                                font_style: "Subtitle2"
+                            MDLabel:
+                                id: low_stock_count
+                                text: "0"
+                                font_style: "H5"
+                                bold: True
+                                theme_text_color: "Custom"
+                                text_color: [0.96, 0.62, 0.04, 1]
+                    MDCard:
+                        padding: dp(16)
+                        radius: [12]
+                        elevation: 2
+                        size_hint_y: None
+                        height: dp(90)
+                        md_bg_color: app.theme_cls.bg_darkest if app.theme_cls.theme_style == "Dark" else [1, 1, 1, 1]
+                        MDBoxLayout:
+                            orientation: "vertical"
+                            MDLabel:
+                                text: "Out of Stock"
+                                theme_text_color: "Secondary"
+                                font_style: "Subtitle2"
+                            MDLabel:
+                                id: out_stock_count
+                                text: "0"
+                                font_style: "H5"
+                                bold: True
+                                theme_text_color: "Error"
+                MDLabel:
+                    text: "Recent Stock Transactions"
+                    font_style: "H6"
+                    bold: True
+                    size_hint_y: None
+                    height: dp(40)
+                MDBoxLayout:
+                    id: txn_list
+                    orientation: "vertical"
+                    size_hint_y: None
+                    height: self.minimum_height
+
+<EmployeesScreen>:
+    name: "employees"
+    MDBoxLayout:
+        orientation: "vertical"
+        MDTopAppBar:
+            title: "Employee Directory"
+            left_action_items: [["menu", lambda x: app.open_drawer()]]
+            right_action_items: [["account-plus", lambda x: root.open_add()]]
+        MDBoxLayout:
+            size_hint_y: None
+            height: dp(64)
+            padding: dp(12)
+            MDTextField:
+                hint_text: "Search employees..."
+                icon_right: "magnify"
+                mode: "fill"
+                radius: [8]
+                size_hint_y: None
+                height: dp(48)
+                on_text: lambda inst, val: root._load(search=val.strip() or None)
+            MDLabel:
+                id: count_label
+                size_hint_x: None
+                width: dp(120)
+                halign: "center"
+                font_style: "Subtitle2"
+        MDScrollView:
+            MDBoxLayout:
+                id: list_container
+                orientation: "vertical"
+                size_hint_y: None
+                height: self.minimum_height
+                padding: dp(12)
+                spacing: dp(4)
+
+<ExpensesScreen>:
+    name: "expenses"
+    MDBoxLayout:
+        orientation: "vertical"
+        md_bg_color: app.theme_cls.bg_normal
+        MDTopAppBar:
+            title: "Expense Management"
+            left_action_items: [["menu", lambda x: app.open_drawer()]]
+            right_action_items: [["plus", lambda x: root.open_add()]]
+        MDCard:
+            size_hint_y: None
+            height: dp(80)
+            padding: dp(16)
+            margin: dp(12)
+            radius: [12]
+            elevation: 3
+            md_bg_color: app.theme_cls.bg_darkest if app.theme_cls.theme_style == "Dark" else [1, 1, 1, 1]
+            MDBoxLayout:
+                MDLabel:
+                    text: "Total Monthly Expenses:"
+                    font_style: "H6"
+                    theme_text_color: "Secondary"
+                MDLabel:
+                    id: total_expense
+                    text: "0.00"
+                    font_style: "H4"
+                    bold: True
+                    halign: "right"
+                    theme_text_color: "Error"
+        MDScrollView:
+            MDBoxLayout:
+                id: list_container
+                orientation: "vertical"
+                size_hint_y: None
+                height: self.minimum_height
+                padding: dp(12)
+                spacing: dp(4)
+
+<AnalyticsScreen>:
+    name: "analytics"
+    MDBoxLayout:
+        orientation: "vertical"
+        md_bg_color: app.theme_cls.bg_normal
+        MDTopAppBar:
+            title: "Business Analytics"
+            elevation: 3
+            left_action_items: [["menu", lambda x: app.open_drawer()]]
+            right_action_items: [["chart-areaspline", lambda x: root.generate_report("sales")]]
+        MDScrollView:
+            MDBoxLayout:
+                orientation: "vertical"
+                padding: dp(20)
+                spacing: dp(16)
+                size_hint_y: None
+                height: self.minimum_height
+                MDLabel:
+                    text: "Revenue & Order Volume"
+                    font_style: "H6"
+                    bold: True
+                    size_hint_y: None
+                    height: dp(34)
+                MDCard:
+                    elevation: 3
+                    radius: [12]
+                    padding: dp(8)
+                    size_hint_y: None
+                    height: dp(260)
+                    md_bg_color: app.theme_cls.bg_darkest if app.theme_cls.theme_style == "Dark" else [1, 1, 1, 1]
+                    MDBoxLayout:
+                        id: chart_box
+                MDLabel:
+                    text: "Sales Distribution by Category"
+                    font_style: "H6"
+                    bold: True
+                    size_hint_y: None
+                    height: dp(34)
+                MDCard:
+                    elevation: 3
+                    radius: [12]
+                    padding: dp(8)
+                    size_hint_y: None
+                    height: dp(220)
+                    md_bg_color: app.theme_cls.bg_darkest if app.theme_cls.theme_style == "Dark" else [1, 1, 1, 1]
+                    MDBoxLayout:
+                        id: pie_box
+                MDLabel:
+                    text: "Top Performing Products"
+                    font_style: "H6"
+                    bold: True
+                    size_hint_y: None
+                    height: dp(34)
+                MDBoxLayout:
+                    id: top_list
+                    orientation: "vertical"
+                    size_hint_y: None
+                    height: self.minimum_height
+
+<ReportsScreen>:
+    name: "reports"
+    MDBoxLayout:
+        orientation: "vertical"
+        MDTopAppBar:
+            title: "Invoices & Reports"
+            left_action_items: [["menu", lambda x: app.open_drawer()]]
+            right_action_items: [["export", lambda x: root.export_csv()]]
+        MDScrollView:
+            MDBoxLayout:
+                id: invoices_list
+                orientation: "vertical"
+                size_hint_y: None
+                height: self.minimum_height
+                padding: dp(12)
+                spacing: dp(4)
+
+<AIAssistantScreen>:
+    name: "ai_assistant"
+    MDBoxLayout:
+        orientation: "vertical"
+        md_bg_color: app.theme_cls.bg_normal
+        MDTopAppBar:
+            title: "AI Business Assistant"
+            elevation: 3
+            left_action_items: [["menu", lambda x: app.open_drawer()]]
+        MDScrollView:
+            id: chat_scroll
+            MDBoxLayout:
+                id: chat_container
+                orientation: "vertical"
+                size_hint_y: None
+                height: self.minimum_height
+                padding: dp(16)
+                spacing: dp(12)
+        MDBoxLayout:
+            size_hint_y: None
+            height: dp(70)
+            padding: dp(12)
+            spacing: dp(12)
+            elevation: 4
+            md_bg_color: app.theme_cls.bg_darkest if app.theme_cls.theme_style == "Dark" else [1, 1, 1, 1]
+            MDTextField:
+                id: input_field
+                hint_text: "Ask AI for insights, summaries, or tips..."
+                mode: "fill"
+                radius: [8]
+                size_hint_y: None
+                height: dp(48)
+                on_text_validate: root.send_message()
+            MDFillRoundFlatIconButton:
+                icon: "send"
+                text: "Send"
+                on_release: root.send_message()
+        MDBoxLayout:
+            size_hint_y: None
+            height: dp(56)
+            padding: [dp(16), dp(8)]
+            spacing: dp(12)
+            MDRoundFlatButton:
+                text: "Forecast Sales"
+                on_release: root.predict_sales()
+            MDRoundFlatButton:
+                text: "Restock Tips"
+                on_release: root.predict_restock()
+
+<SettingsScreen>:
+    name: "settings"
+    MDBoxLayout:
+        orientation: "vertical"
+        md_bg_color: app.theme_cls.bg_normal
+        MDTopAppBar:
+            title: "System Settings"
+            elevation: 3
+            left_action_items: [["menu", lambda x: app.open_drawer()]]
+            right_action_items: [["content-save-check", lambda x: root.save_settings()]]
+        MDScrollView:
+            MDBoxLayout:
+                orientation: "vertical"
+                padding: dp(24)
+                spacing: dp(16)
+                size_hint_y: None
+                height: self.minimum_height
+                MDLabel:
+                    text: "Business Profile"
+                    font_style: "H6"
+                    bold: True
+                    theme_text_color: "Primary"
+                    size_hint_y: None
+                    height: dp(34)
+                MDCard:
+                    orientation: "vertical"
+                    size_hint_y: None
+                    height: dp(280)
+                    padding: dp(16)
+                    spacing: dp(12)
+                    elevation: 2
+                    radius: [12]
+                    md_bg_color: app.theme_cls.bg_darkest if app.theme_cls.theme_style == "Dark" else [1, 1, 1, 1]
+                    MDTextField:
+                        id: setting_shop_name
+                        hint_text: "Registered Business Name"
+                        mode: "fill"
+                        radius: [8]
+                    MDTextField:
+                        id: setting_shop_phone
+                        hint_text: "Contact Number"
+                        mode: "fill"
+                        radius: [8]
+                    MDTextField:
+                        id: setting_shop_address
+                        hint_text: "Business Address"
+                        mode: "fill"
+                        radius: [8]
+                    MDTextField:
+                        id: setting_shop_gst
+                        hint_text: "GST / VAT Number"
+                        mode: "fill"
+                        radius: [8]
+                
+                MDLabel:
+                    text: "Billing & Taxation"
+                    font_style: "H6"
+                    bold: True
+                    theme_text_color: "Primary"
+                    size_hint_y: None
+                    height: dp(34)
+                MDCard:
+                    orientation: "vertical"
+                    size_hint_y: None
+                    height: dp(150)
+                    padding: dp(16)
+                    spacing: dp(12)
+                    elevation: 2
+                    radius: [12]
+                    md_bg_color: app.theme_cls.bg_darkest if app.theme_cls.theme_style == "Dark" else [1, 1, 1, 1]
+                    MDTextField:
+                        id: setting_currency_symbol
+                        hint_text: "Currency Symbol"
+                        text: "Rs."
+                        mode: "fill"
+                        radius: [8]
+                    MDTextField:
+                        id: setting_tax_rate
+                        hint_text: "Default Tax Rate (%)"
+                        mode: "fill"
+                        radius: [8]
+                
+                MDLabel:
+                    text: "Appearance & Data"
+                    font_style: "H6"
+                    bold: True
+                    theme_text_color: "Primary"
+                    size_hint_y: None
+                    height: dp(34)
+                MDBoxLayout:
+                    size_hint_y: None
+                    height: dp(56)
+                    spacing: dp(12)
+                    MDFillRoundFlatButton:
+                        text: "Dark Mode"
+                        icon: "weather-night"
+                        on_release: app.theme_cls.__setattr__("theme_style", "Dark")
+                    MDFillRoundFlatButton:
+                        text: "Light Mode"
+                        icon: "weather-sunny"
+                        on_release: app.theme_cls.__setattr__("theme_style", "Light")
+                MDBoxLayout:
+                    size_hint_y: None
+                    height: dp(56)
+                    spacing: dp(12)
+                    MDRoundFlatIconButton:
+                        text: "Backup DB"
+                        icon: "database-export"
+                        on_release: root.create_backup()
+                    MDRoundFlatIconButton:
+                        text: "Export JSON"
+                        icon: "code-json"
+                        on_release: root.export_json()
+                MDFillRoundFlatIconButton:
+                    text: "User Management"
+                    icon: "account-cog"
+                    size_hint_y: None
+                    height: dp(56)
+                    on_release: root.manage_users()
+'''
+
+if __name__ == "__main__":
+    with open("app/views/smartpos.kv", "w", encoding="utf-8") as f:
+        f.write(KV)
+    print("UI Overhaul KV generated.")
